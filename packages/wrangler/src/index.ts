@@ -44,6 +44,7 @@ import * as metrics from "./metrics";
 import { mTlsCertificateCommands } from "./mtls-certificate/cli";
 import { pages } from "./pages";
 import { APIError, formatMessage, ParseError } from "./parse";
+import { pipelines } from "./pipelines"
 import { pubSubCommands } from "./pubsub/pubsub-commands";
 import { queues } from "./queues/cli/commands";
 import { r2 } from "./r2";
@@ -599,9 +600,18 @@ export function createCLIParser(argv: string[]) {
 	);
 
 	// ai
-	wrangler.command("ai", "🤖 Manage AI models\n", (aiYargs) => {
+	wrangler.command("ai", "🤖 Manage AI models", (aiYargs) => {
 		return ai(aiYargs.command(subHelp));
 	});
+
+	// pipelines
+	wrangler.command(
+		"pipelines",
+		`🚰 Manage Worker Pipelines\n`,
+		(pipelinesYargs) => {
+			return pipelines(pipelinesYargs, subHelp);
+		}
+	);
 
 	/******************** CMD GROUP ***********************/
 	// login

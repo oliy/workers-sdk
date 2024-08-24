@@ -2,50 +2,47 @@ import { createHash } from "node:crypto";
 import { fetchResult } from "../cfetch";
 import { R2BucketInfo } from "../r2/helpers";
 
-export enum GeneralCompression {
-	UNCOMPRESSED = 'UNCOMPRESSED',
-	GZIP = 'GZIP',
-	SNAPPY = 'SNAPPY'
-}
-
 // ensure this is in sync with:
 //   https://bitbucket.cfdata.org/projects/PIPE/repos/superpipe/browse/src/coordinator/types.ts#6
-export type PipelineConfig = {
-	name: string
-	input: {
-		JSON: {
-			schema?: string
-		}
-	}
-	destination: {
-		R2_BUCKET: {
-			bucket: string
-            credentials: {
-			    endpoint: string
-			    access_key_id: string
-			    secret_access_key: string
-            },
-			batching?: {
-				max_bytes_mb: number
-				max_duration_seconds: number
-			}
-			custom_parititions?: string
-			filename_pattern?: string
-			output_format: {
-				JSON?: {
-					compression?: GeneralCompression
-				}
-				PARQUET?: {
-					compression?: GeneralCompression
-					version?: string
-				}
-			}
-		}
-	}
+
+export type TransformConfig = {
+	script: string,
+	entrypoint: string
+}
+export type PipelineUserConfig = {
+  name: string
+  metadata: {[x: string]: string}
+  source: {
+    type: string
+    format: string
+    batch: {
+			max_duration_s?: number
+			max_mb?: number
+			max_rows?: number
+		},
+  },
+  transforms: TransformConfig[]
+  destination: {
+    type: string
+    format: string
+    compression: {
+      type: string
+    },
+    path: {
+      bucket: string
+			filepath?: string
+			filename?: string
+    },
+    credentials: {
+      endpoint: string
+      secret_access_key: string
+      access_key_id: string
+    },
+  },
 }
 
 // Pipeline from v4 API
-export type Pipeline = PipelineConfig & {
+export type Pipeline = PipelineUserConfig & {
 	id: string
 	currentVersion: number
 	endpoint: string
@@ -88,9 +85,9 @@ export async function generateR2ServiceToken(label: string, accountId: string, b
 	const body = JSON.stringify({
 		policies: [{
 			effect: "allow",
-			permission_groups:[{ "id": perm.id }],
-			resources:  {
-				[`com.cloudflare.edge.r2.bucket.${accountId}_default_${bucket}`]:"*",
+			permission_groups: [{ "id": perm.id }],
+			resources: {
+				[`com.cloudflare.edge.r2.bucket.${accountId}_default_${bucket}`]: "*",
 			},
 		}],
 		name: label,

@@ -14,7 +14,7 @@ import {
 	generateR2ServiceToken,
 	getR2Bucket,
 	listPipelines,
-	PipelineConfig,
+	PipelineUserConfig,
 	sha256,
 } from "./client";
 
@@ -35,7 +35,44 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 					.option("r2", {
 						type: "string",
 						describe: "Create a default aggregation pipeline to the named R2 bucket",
-					});
+						demandOption: true
+					})
+					.option("batch-max-mb", {
+						describe: "The maximum size of a batch before flush in megabytes",
+						type: "string",
+						demandOption: false,
+					})
+					.option("batch-max-rows", {
+						describe: "The maximum size of a batch before flush in rows",
+						type: "string",
+						demandOption: false,
+					})
+					.option("batch-max-seconds", {
+						describe: "The maximum duration of a batch before flush in seconds",
+						type: "string",
+						demandOption: false,
+					})
+					.option("transform", {
+						describe: "The name of the script and entrypoint where the transformation is implemented in the format 'script.entrypoint'",
+						type: "string",
+						demandOption: false,
+					})
+					.option("compression", {
+						describe: "Sets the compression format of output files",
+						type: "string",
+						choices: ['none', 'gzip', 'deflate'],
+						demandOption: false,
+					})
+					.option("filepath", {
+						describe: "The path to store the file in the bucket",
+						type: "string",
+						demandOption: false,
+					})
+					.option("filename", {
+						describe: "The name of the file in the bucket. Must contain '${slug}'",
+						type: "string",
+						demandOption: false,
+					})
 			},
 			async (args) => {
 				await printWranglerBanner();
@@ -43,6 +80,13 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 				const config = readConfig(args.config, args);
 				const bucket = args.r2
 				const name = args.pipeline;
+				const compression = args.compression === undefined ? 'none' : args.compression
+
+				const batch = {
+					max_mb: args['batch-max-mb'],
+					max_duration: args['batch-max-duration'],
+					max_rows: args['batch-max-rows']
+				}
 
 				if (!config.name) {
 					logger.warn(
@@ -72,25 +116,51 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 
 				logger.log(`🌀 Creating pipeline named "${name}"`);
 
-				const pipelineConfig: PipelineConfig = {
-					name,
-					input: {
-						JSON: {}
+				const pipelineConfig: PipelineUserConfig = {
+					name: name,
+					metadata: {},
+					source: {
+						type: 'http',
+						format: 'json',
+						batch: batch,
 					},
+					transforms: [],
 					destination: {
-						R2_BUCKET: {
-							bucket,
-							credentials: {
-								endpoint,
-								access_key_id,
-								secret_access_key,
-							},
-							output_format: {
-								JSON: {}
-							}
-						}
+						type: 'r2',
+						format: 'json',
+						compression: {
+							type: compression,
+						},
+						path: {
+							bucket: bucket,
+						},
+						credentials: {
+							endpoint: endpoint,
+							secret_access_key: secret_access_key,
+							access_key_id: access_key_id
+						},
+					},
+				}
+
+				if (args.transform !== undefined) {
+					const split = args.transform.split('.')
+					if (split.length === 2) {
+						pipelineConfig.transforms.push({
+							script: split[0],
+							entrypoint: split[1]
+						})
+					} else {
+						throw new Error('invalid transform: required syntax script.entrypoint')
 					}
 				}
+
+				if (args.filepath) {
+					pipelineConfig.destination.path.filepath = args.filepath
+				}
+				if (args.filename) {
+					pipelineConfig.destination.path.filename = args.filename
+				}
+
 				const pipeline = await createPipeline(accountId, pipelineConfig);
 				await metrics.sendMetricsEvent("create pipeline", {
 					sendMetrics: config.send_metrics,

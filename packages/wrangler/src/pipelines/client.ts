@@ -16,7 +16,7 @@ export type PipelineUserConfig = {
     type: string
     format: string
 		schema?: string
-  },
+  }[],
   transforms: TransformConfig[]
   destination: {
     type: string

@@ -64,7 +64,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 						demandOption: false,
 					})
 					.option("filepath", {
-						describe: "The path to store the file in the bucket. Example '/2024-01-01/events/'",
+						describe: "The path to store the file in the bucket. Example '2024-01-01/events'",
 						type: "string",
 						demandOption: false,
 					})
@@ -124,10 +124,16 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 				const pipelineConfig: PipelineUserConfig = {
 					name: name,
 					metadata: {},
-					source: {
-						type: 'http',
-						format: 'json',
-					},
+					source: [
+						{
+							type: 'http',
+							format: 'json',
+						},
+						{
+							type: 'binding',
+							format: 'json',
+						},
+					],
 					transforms: [],
 					destination: {
 						type: 'r2',
@@ -147,8 +153,8 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 					},
 				}
 
-				if (args.authentication) {
-					pipelineConfig.source.type = 'binding-only'
+				if (args.authentication !== undefined && args.authentication === true) {
+					pipelineConfig.source.shift()
 				}
 
 				if (args.transform !== undefined) {

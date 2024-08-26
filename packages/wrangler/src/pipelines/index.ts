@@ -89,7 +89,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 
 				const batch = {
 					max_mb: args['batch-max-mb'],
-					max_duration: args['batch-max-duration'],
+					max_duration: args['batch-max-seconds'],
 					max_rows: args['batch-max-rows']
 				}
 

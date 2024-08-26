@@ -15,11 +15,7 @@ export type PipelineUserConfig = {
   source: {
     type: string
     format: string
-    batch: {
-			max_duration_s?: number
-			max_mb?: number
-			max_rows?: number
-		},
+		schema?: string
   },
   transforms: TransformConfig[]
   destination: {
@@ -28,6 +24,11 @@ export type PipelineUserConfig = {
     compression: {
       type: string
     },
+		batch: {
+			max_duration_s?: number
+			max_mb?: number
+			max_rows?: number
+		},
     path: {
       bucket: string
 			filepath?: string

@@ -73,6 +73,11 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 						type: "string",
 						demandOption: false,
 					})
+					.option("authentication", {
+						describe: "Enabling authentication means that data can only be sent to the pipeline via the binding",
+						type: "boolean",
+						demandOption: false,
+					})
 			},
 			async (args) => {
 				await printWranglerBanner();
@@ -122,7 +127,6 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 					source: {
 						type: 'http',
 						format: 'json',
-						batch: batch,
 					},
 					transforms: [],
 					destination: {
@@ -131,6 +135,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 						compression: {
 							type: compression,
 						},
+						batch: batch,
 						path: {
 							bucket: bucket,
 						},
@@ -142,12 +147,21 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 					},
 				}
 
+				if (args.authentication) {
+					pipelineConfig.source.type = 'binding-only'
+				}
+
 				if (args.transform !== undefined) {
 					const split = args.transform.split('.')
 					if (split.length === 2) {
 						pipelineConfig.transforms.push({
 							script: split[0],
 							entrypoint: split[1]
+						})
+					} else if (split.length === 1) {
+						pipelineConfig.transforms.push({
+							script: split[0],
+							entrypoint: 'Transform'
 						})
 					} else {
 						throw new Error('invalid transform: required syntax script.entrypoint')

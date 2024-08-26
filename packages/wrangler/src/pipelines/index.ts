@@ -39,17 +39,17 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 					})
 					.option("batch-max-mb", {
 						describe: "The maximum size of a batch before flush in megabytes",
-						type: "string",
+						type: "number",
 						demandOption: false,
 					})
 					.option("batch-max-rows", {
 						describe: "The maximum size of a batch before flush in rows",
-						type: "string",
+						type: "number",
 						demandOption: false,
 					})
 					.option("batch-max-seconds", {
 						describe: "The maximum duration of a batch before flush in seconds",
-						type: "string",
+						type: "number",
 						demandOption: false,
 					})
 					.option("transform", {

@@ -107,7 +107,7 @@ export async function getR2Bucket(accountId: string, name: string): Promise<R2Bu
 }
 
 // v4 API to Create new Pipeline
-export async function createPipeline(accountId: string, config: PipelineConfig): Promise<Pipeline> {
+export async function createPipeline(accountId: string, config: PipelineUserConfig): Promise<Pipeline> {
 	return await fetchResult<Pipeline>(`/accounts/${accountId}/pipelines`, {
 		method: "POST",
 		headers: API_HEADERS,
@@ -123,7 +123,7 @@ export async function getPipeline(accountId: string, id: string): Promise<Pipeli
 }
 
 // v4 API to Update Pipeline Configuration
-export async function updatePipeline(accountId: string, id: string, config: PipelineConfig): Promise<Pipeline> {
+export async function updatePipeline(accountId: string, id: string, config: PipelineUserConfig): Promise<Pipeline> {
 	return await fetchResult<Pipeline>(`/accounts/${accountId}/pipelines/${id}`, {
 		method: "PUT",
 		headers: API_HEADERS,

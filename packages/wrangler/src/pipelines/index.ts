@@ -64,12 +64,12 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 						demandOption: false,
 					})
 					.option("filepath", {
-						describe: "The path to store the file in the bucket",
+						describe: "The path to store the file in the bucket. Example '/2024-01-01/events/'",
 						type: "string",
 						demandOption: false,
 					})
 					.option("filename", {
-						describe: "The name of the file in the bucket. Must contain '${slug}'",
+						describe: "The name of the file in the bucket. Must contain '${slug}'. File extension is optional",
 						type: "string",
 						demandOption: false,
 					})

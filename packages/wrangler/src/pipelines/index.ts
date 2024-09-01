@@ -25,67 +25,43 @@ import {
 function addCreateAndUpdateOptions(yargs: yargs.Argv<CommonYargsOptions>) {
 	return yargs
 		.option("batch-max-mb", {
-			describe: `
-				The approximate maximum size of a batch before flush in megabytes
-				Default: 10
-			`,
+			describe: 'The approximate maximum size of a batch before flush in megabytes \nDefault: 10',
 			type: "number",
 			demandOption: false,
 		})
 		.option("batch-max-rows", {
-			describe: `
-				The approximate maximum size of a batch before flush in rows
-				Default: 10000
-			`,
+			describe: 'The approximate maximum size of a batch before flush in rows \nDefault: 10000',
 			type: "number",
 			demandOption: false,
 		})
 		.option("batch-max-seconds", {
-			describe: `
-				The approximate maximum duration of a batch before flush in seconds
-				Default: 15
-			`,
+			describe: 'The approximate maximum duration of a batch before flush in seconds \nDefault: 15',
 			type: "number",
 			demandOption: false,
 		})
 		.option("transform", {
-			describe: `
-				The worker and entrypoint of the PipelineTransform implementation in the format 'worker.entrypoint'
-				Default: No transformation
-			`,
+			describe: 'The worker and entrypoint of the PipelineTransform implementation in the format "worker.entrypoint" \nDefault: No transformation worker',
 			type: "string",
 			demandOption: false,
 		})
 		.option("compression", {
-			describe: `
-				Sets the compression format of output files
-				Default: gzip
-			`,
+			describe: 'Sets the compression format of output files \nDefault: gzip',
 			type: "string",
 			choices: ['none', 'gzip', 'deflate'],
 			demandOption: false,
 		})
 		.option("filepath", {
-			describe: `
-				The path to store files in the destination bucket
-				Default: event_date=\${date}/hr=\${hr}
-			`,
+			describe: 'The path to store files in the destination bucket \nDefault: event_date=${date}/hr=${hr}',
 			type: "string",
 			demandOption: false,
 		})
 		.option("filename", {
-			describe: `
-				The name of the file in the bucket. Must contain '\${slug}'. File extension is optional
-				Default: \${slug}-\${hr}.json
-			`,
+			describe: 'The name of the file in the bucket. Must contain "${slug}". File extension is optional \nDefault: ${slug}-${hr}.json',
 			type: "string",
 			demandOption: false,
 		})
 		.option("authentication", {
-			describe: `
-				Enabling authentication means that data can only be sent to the pipeline via the binding
-				Default: false
-			`,
+			describe: 'Enabling authentication means that data can only be sent to the pipeline via the binding \nDefault: false',
 			type: "boolean",
 			demandOption: false,
 		})
@@ -119,7 +95,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 
 				const batch = {
 					max_mb: args['batch-max-mb'],
-					max_duration: args['batch-max-seconds'],
+					max_duration_s: args['batch-max-seconds'],
 					max_rows: args['batch-max-rows']
 				}
 
@@ -211,12 +187,9 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 					sendMetrics: config.send_metrics,
 				});
 
-				logger.log(`✅ Successfully created pipeline "${pipeline.name}" with ID ${pipeline.id}\n`);
-				logger.log(`
-					You can now send data to your pipeline!\n
-					Simple Example: curl "${pipeline.endpoint}/send" -d '[{"foo": "bar"}]'
-					Load Example:
-				`);
+				logger.log(`✅ Successfully created pipeline "${pipeline.name}" with ID ${pipeline.id}`);
+				logger.log('🎉 You can now send data to your pipeline!');
+				logger.log(`Example: curl "${pipeline.endpoint}" -d '[{"foo": "bar"}]'`);
 			}
 		)
 		.command(
@@ -243,7 +216,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 			}
 		)
 		.command(
-			"delete <pipeline-name>",
+			"delete <pipeline>",
 			"Delete a pipeline",
 			(yargs) => {
 				return yargs
@@ -272,7 +245,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 			}
 		)
 		.command(
-			"show <pipeline-name>",
+			"show <pipeline>",
 			"Show a pipeline configuration",
 			(yargs) => {
 				return yargs
@@ -292,20 +265,17 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 					throw new Error('must provide a valid pipeline name')
 				}
 
-				logger.log(`Retrieving config for pipeline ${name}.`);
+				logger.log(`Retrieving config for pipeline "${name}".`);
 				const pipeline = await getPipeline(accountId, name);
 				await metrics.sendMetricsEvent("show pipeline", {
 					sendMetrics: config.send_metrics,
 				});
 
-				logger.log(`
-					Pipeline Configuration:
-					${pipeline}
-				`)
+				logger.log(JSON.stringify(pipeline, null, 2));
 			}
 		)
 		.command(
-			"update <pipeline-name>",
+			"update <pipeline>",
 			"Update a pipeline",
 			(yargs) => {
 				return addCreateAndUpdateOptions(yargs)
@@ -349,7 +319,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 
 				const batch = {
 					max_mb: args['batch-max-mb'],
-					max_duration: args['batch-max-seconds'],
+					max_duration_s: args['batch-max-seconds'],
 					max_rows: args['batch-max-rows']
 				}
 
@@ -442,7 +412,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 					}
 				}
 
-				logger.log(`🌀 Updating pipeline named "${name}"`);
+				logger.log(`🌀 Updating pipeline "${name}"`);
 				const pipeline = await updatePipeline(accountId, name, pipelineConfig);
 				await metrics.sendMetricsEvent("update pipeline", {
 					sendMetrics: config.send_metrics,

@@ -4,6 +4,10 @@ import { R2BucketInfo } from "../r2/helpers";
 
 // ensure this is in sync with:
 //   https://bitbucket.cfdata.org/projects/PIPE/repos/superpipe/browse/src/coordinator/types.ts#6
+export type RecursivePartial<T> = {
+	[P in keyof T]?: RecursivePartial<T[P]>;
+};
+export type PartialExcept<T, K extends keyof T> = RecursivePartial<T> & Pick<T, K>;
 
 export type TransformConfig = {
 	script: string,
@@ -116,21 +120,18 @@ export async function createPipeline(accountId: string, config: PipelineUserConf
 }
 
 // v4 API to Get Pipeline Details
-export async function getPipeline(accountId: string, id: string): Promise<Pipeline> {
-	return await fetchResult<Pipeline>(`/accounts/${accountId}/pipelines/${id}`, {
+export async function getPipeline(accountId: string, name: string): Promise<Pipeline> {
+	return await fetchResult<Pipeline>(`/accounts/${accountId}/pipelines/${name}`, {
 		method: "GET",
 	});
 }
 
 // v4 API to Update Pipeline Configuration
-export async function updatePipeline(accountId: string, id: string, config: PipelineUserConfig): Promise<Pipeline> {
-	return await fetchResult<Pipeline>(`/accounts/${accountId}/pipelines/${id}`, {
+export async function updatePipeline(accountId: string, name: string, config: PartialExcept<PipelineUserConfig, "name">): Promise<Pipeline> {
+	return await fetchResult<Pipeline>(`/accounts/${accountId}/pipelines/${name}`, {
 		method: "PUT",
 		headers: API_HEADERS,
-		body: JSON.stringify({
-			name: 'foo',
-			config,
-		}),
+		body: JSON.stringify(config),
 	});
 }
 
@@ -142,8 +143,8 @@ export async function listPipelines(accountId: string): Promise<PipelineEntry[]>
 }
 
 // v4 API to Delete Pipeline
-export async function deletePipeline(accountId: string, id: string): Promise<void> {
-	return await fetchResult<void>(`/accounts/${accountId}/pipelines/${id}`, {
+export async function deletePipeline(accountId: string, name: string): Promise<void> {
+	return await fetchResult<void>(`/accounts/${accountId}/pipelines/${name}`, {
 		method: "DELETE",
 		headers: API_HEADERS,
 	});

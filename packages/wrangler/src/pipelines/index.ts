@@ -18,7 +18,8 @@ import {
 	updatePipeline,
 	PipelineUserConfig,
 	sha256,
-	PartialExcept
+	PartialExcept,
+	getPipeline
 } from "./client";
 
 function addCreateAndUpdateOptions(yargs: yargs.Argv<CommonYargsOptions>) {
@@ -58,7 +59,7 @@ function addCreateAndUpdateOptions(yargs: yargs.Argv<CommonYargsOptions>) {
 		.option("compression", {
 			describe: `
 				Sets the compression format of output files
-				Default: none
+				Default: gzip
 			`,
 			type: "string",
 			choices: ['none', 'gzip', 'deflate'],
@@ -114,7 +115,7 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 				const config = readConfig(args.config, args);
 				const bucket = args.r2
 				const name = args.pipeline;
-				const compression = args.compression === undefined ? 'none' : args.compression
+				const compression = args.compression === undefined ? 'gzip' : args.compression
 
 				const batch = {
 					max_mb: args['batch-max-mb'],
@@ -268,6 +269,39 @@ export function pipelines(yargs: CommonYargsArgv, subHelp: SubHelp) {
 				await metrics.sendMetricsEvent("delete pipeline", {
 					sendMetrics: config.send_metrics,
 				});
+			}
+		)
+		.command(
+			"show <pipeline-name>",
+			"Show a pipeline configuration",
+			(yargs) => {
+				return yargs
+					.positional("pipeline", {
+						type: "string",
+						describe: "The name of the pipeline to show",
+						demandOption: true
+					})
+			},
+			async (args) => {
+				await printWranglerBanner();
+				const config = readConfig(args.config, args);
+				const accountId = await requireAuth(config);
+				const name = args.pipeline
+
+				if (!name.match(/^[a-zA-Z0-9-]+$/)) {
+					throw new Error('must provide a valid pipeline name')
+				}
+
+				logger.log(`Retrieving config for pipeline ${name}.`);
+				const pipeline = await getPipeline(accountId, name);
+				await metrics.sendMetricsEvent("show pipeline", {
+					sendMetrics: config.send_metrics,
+				});
+
+				logger.log(`
+					Pipeline Configuration:
+					${pipeline}
+				`)
 			}
 		)
 		.command(

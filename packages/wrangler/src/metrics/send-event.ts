@@ -81,6 +81,7 @@ export type EventNames =
 	| "list pipelines"
 	| "delete pipeline"
 	| "update pipeline"
+	| "show pipeline"
 	;
 
 /**
